@@ -1,109 +1,65 @@
+from collections import Counter
+
 data = """ This is a string of data that is going to be tokenized
 Tokenization is the process of splitting words into chunks
 words and stuff, BOO, did I scare you? bet you didn't expect that, huh?
 overlapping letters, blah blah blah blah I'm starting to hate typing all of this out
 Someone or something has to do it though for a proof of concept OFC but still like dude are you kidding me?
 These checks are pointless, just write good code and you don't have to write stuff like this 0-o
-Anyways losers, I'm going to head out now. I got some code to write, can't believe I made you read all of this lol.
-"""
+Anyways losers, I'm going to head out now. I got some code to write, can't believe I made you read all of this lol"""
 
-VOCAB_SIZE = 50000 # 50,000
+from collections import Counter
+
+VOCAB_SIZE = 50_000
 COMMONALITY_THRESHOLD = 5
 
-# Init vocab dict
-def init_vocab():
-    utf_8_vocab = {chr(i): i for i in range(0,256)}
-    return utf_8_vocab
+# ========================================
+# Learned Vocabulary Via Byte Level BPE
+# ========================================
 
+def bpe_train(text: str, vocab_size: int = VOCAB_SIZE, commonality_thresh: int = COMMONALITY_THRESHOLD) -> dict:
+    # Base Vocab of all UTF-8 Encodings:Character ID (0-256), token:id and id:token init
+    vocab_tok_to_id  = {chr(i): i for i in range(257)}
+    vocab_id_to_tok = {i : chr(i) for i in range(257)}
+    print(vocab_id_to_tok)
+    current_id = 257 # Next free ID will be 257 because UTF-8 goes up to 256
 
-# Returns list of character numericals cooresponding to their UTF-8 encoding (e.g. [0,68,212...0-256], and a dict of all utf-8 character
-def utf_8_encode(text):
-    vocab_dict = init_vocab()
-    encoded_list = []
-    for i in range(len(text)):
-        encoded_list.append(vocab_dict[text[i]])
-    return encoded_list,vocab_dict
+    # Encode the text into numerical digits based on their token ID's
+    encoded_text = [vocab_tok_to_id[i] for i in text]
+
+    # Go until vocab size is reached (or when in commonality threshold, see if statements)  
+    while current_id < vocab_size:
+
+        # Generate adjacent pairs list
+        pairs = [tuple(encoded_text[i:i+2]) for i in range(len(encoded_text)-1)]
         
-
-def greedy_alg_pair(text):
-    # =============
-    # Init:
-    # =============
-
-    # Encode characters to UTF-8 numbering prior to pairing
-    encoded_text_list,vocab = utf_8_encode(text)
-
-    # Initializing Vars for primary tokenization loop:
-    # Other
-    common_iter_pair = COMMONALITY_THRESHOLD + 1 # Make bigger than Commonality threshold so while loop triggers
-    current_id_iter = 257 # Vocab is currently all UTF-8 Bytes, 0-256, so the next token ID will be 257
-
-    # =============
-    # Main Loop
-    # =============
-    # Take pairs of bytes in data, count them by frequency in data, 
-    # most common pair is chosen as new vocab token to add
-    while current_id_iter < VOCAB_SIZE:
-        # ==================
-        # Reset Pair Counts
-        # ==================
-        # Character Pair Counts
-        pairs = {}
-        # Placements of Pairs for Easy Replacement after finding most common pair
-        pair_placements = {}
-        # Get Length of data
-        data_length = len(encoded_text_list) # Length of data changes when you add replace bytes with new vocab instances
-
-
-
-        # =============
-        # BPE Scroll
-        # =============
-        # Loop through each letter in data
-        for i in range(data_length-1):
-            # Generate a pair of current selected letter and the next one after
-            pair = (encoded_text_list[i],encoded_text_list[i + 1])
-            # If it's not been counted yet set to 1, otherwise add one to the count
-            if pair not in pairs:
-                pairs[pair] = 1
-            else:
-                pairs[pair] += 1
-
-
-            # ================
-            # Pair Placement
-            # ================
-            # Add the placement of the current pair in the encoded text for easy cleanup:
-            if not pair_placements.get(pair):
-                pair_placements[pair] = [i]
-            else:
-                pair_placements[pair].append(i)
-
-
-        # ================
-        # Adding New Token
-        # ================
-
-        # Find most common pair.
-        common_iter_pair = max(pairs,key=pairs.get)
-
-        # Add the most common byte pair to vocab if it reaches Commonality Threshold
-        if pairs[common_iter_pair] > COMMONALITY_THRESHOLD:
-            vocab[common_iter_pair] = current_id_iter
-            current_id_iter += 1
-        else:
+        # Get most common pair ((a,b) tuple) and frequency
+        (a, b), most_common_count = Counter(pairs).most_common(1)[0]
+        print(token_tuple)
+        # stop conditions
+        if most_common_count < commonality_thresh:
             break
 
-        # ================
-        # Cleanup
-        # ================
+        # assemble token string (e.g. "ab") and assign an the id in vocab dictionaries
+        token = vocab_id_to_tok[a] + vocab_id_to_tok[b]
+        vocab_tok_to_id[token] = current_id
+        vocab_id_to_tok[current_id] = token
 
-        # Replace all of the instances of the most common Byte-Pair within the data with the new token ID
-        pair_replaced_count = 0 # When you replace a pair it will make the list shorter, screwing up the index, this is to compensate
-        for i in pair_placements[common_iter_pair]:
-            corrected_placement = i-pair_replaced_count
-            encoded_text_list[corrected_placement:corrected_placement+2] = [vocab[common_iter_pair]]
-            pair_replaced_count += 1
-    return vocab
+        # replace occurrences of the pair with the new token in the encoded_text list
+        merged = []
+        i = 0
+        while i < len(encoded_text):
+            if i + 1 < len(encoded_text) and (encoded_text[i], encoded_text[i + 1]) == (a, b):
+                merged.append(current_id)
+                i += 2
+            else:
+                merged.append(encoded_text[i])
+                i += 1
+        encoded_text = merged
 
-print(greedy_alg_pair(data))
+        # Finally add one to the ID so next token can be added
+        current_id += 1
+    return vocab_tok_to_id
+
+
+bpe_train(data)
