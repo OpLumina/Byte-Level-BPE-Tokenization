@@ -8,7 +8,7 @@ A Byte‑Level Byte Pair Encoding (BPE) tokenizer works directly on raw UTF‑8 
 - Start with a vocabulary that contains every possible byte value (0‑255), each mapped to its own integer ID.  
 - Convert the input text to UTF‑8 ID's and treat each resulting byte as an individual token.
 
-### Main Byte‑Pairing Loop (Step‑by‑Step)  
+### Main Token‑Pairing Loop (Step‑by‑Step)  
 
 1. **Count adjacent byte pairs** – Scan the current token list with a sliding window of size 2 and tally how often each pair appears.  
 2. **Select the most frequent pair** – Identify the pair with the highest occurrence count.  
