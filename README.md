@@ -21,4 +21,4 @@ Repeat these steps until the vocabulary reaches the desired size, or when token 
 
 - **Language‑agnostic** – Operates on raw bytes, so no language‑specific preprocessing is needed.  
 - **Deterministic** – Given the same corpus and target vocab size, the resulting vocabulary is always identical.  
-- **Compact** – Frequently co‑occurring byte sequences become single tokens, reducing sequence length and improving efficiency.  
+- **Compact** – Frequently co‑occurring byte sequences become single tokens, reducing sequence length and improving efficiency. Byte Level BPE can also be used as a form of Data Compression
